@@ -7,6 +7,7 @@
 import argparse
 import csv
 import datetime
+import htmlentitydefs
 import re
 import sys
 import urllib2
@@ -143,7 +144,6 @@ countries = {
     'KR': Country('South Korea', '143466,12'),
 }
 
-app_re = re.compile(r'<div.* aria-label="(.*)" adam-id="(\d+)"')
 store_url = 'http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewTop'
 
 queries = {
@@ -161,6 +161,13 @@ queries = {
     ('ipad','games','gross'):     '?genreId=6014&id=25134&popId=46',
 }
 
+app_re = re.compile(r'<div.* aria-label="(.*)" adam-id="(\d+)"')
+entities_re = re.compile(r'&(%s);' % '|'.join(htmlentitydefs.entitydefs))
+
+def decode(s):
+    """Decode HTML entities in the given string."""
+    return entities_re.sub(lambda m: htmlentitydefs.entitydefs[m.group(1)], s)
+
 def scrape(query, storefront):
     req = urllib2.Request(url=store_url + query)
     req.add_header('User-Agent', 'iTunes/10.4.1 (Macintosh; Intel Mac OS X 10.6.8) AppleWebKit/534.50')
@@ -169,7 +176,7 @@ def scrape(query, storefront):
     f = urllib2.urlopen(req)
     for rank, match in enumerate(app_re.finditer(f.read()), start=1):
         name, appid = match.groups()
-        yield dict(rank=rank, name=name, appid=int(appid))
+        yield dict(rank=rank, name=decode(name), appid=int(appid))
 
 def main(argv):
     # Handle argument parsing.
