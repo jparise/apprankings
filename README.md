@@ -2,7 +2,7 @@
 
 Copyright &copy; 2011 Jon Parise &lt;jon@indelible.org&gt;
 
-`apprankings.py` scrapes App Store rankings from iTunes and writes the results
+`apprankings` scrapes App Store rankings from iTunes and writes the results
 to a CSV-formatted output file.  It currently queries both the iPhone and iPad
 App Stores for the *Paid*, *Free*, and *Top Grossing* lists.  It covers the
 *All* and *Games* categories, but it could be further extended and
@@ -12,8 +12,8 @@ This code is released under the terms of the [MIT License][license].
 
 ## Usage
 
-    usage: apprankings.py [-h] [-a APPS [APPS ...]] [-c COUNTRIES [COUNTRIES ...]]
-                        [-o OUTPUT] [-v]
+    usage: apprankings [-h] [-a APPS [APPS ...]] [-c COUNTRIES [COUNTRIES ...]]
+                       [-o OUTPUT] [-v]
 
     Scrape App Store rankings
 
