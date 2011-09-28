@@ -8,6 +8,8 @@ App Stores for the *Paid*, *Free*, and *Top Grossing* lists.  It covers the
 *All* and *Games* categories, but it could be further extended and
 parameterized to support a much wider range of queries.
 
+This code is released under the terms of the [MIT License][license].
+
 ## Usage
 
     usage: apprankings.py [-h] [-a APPS [APPS ...]] [-c COUNTRIES [COUNTRIES ...]]
@@ -34,3 +36,5 @@ parameterized to support a much wider range of queries.
   * Price
   * Updated Date
 * Profile for performance improvements
+
+[license]: http://www.opensource.org/licenses/mit-license.php
