@@ -164,9 +164,28 @@ queries = {
 app_re = re.compile(r'<div.* aria-label="(.*)" adam-id="(\d+)"')
 entities_re = re.compile(r'&(%s);' % '|'.join(htmlentitydefs.entitydefs))
 
-def decode(s):
-    """Decode HTML entities in the given string."""
-    return entities_re.sub(lambda m: htmlentitydefs.entitydefs[m.group(1)], s)
+def decode(text):
+    """Decode HTML entities in the given text as a UTF-8 string."""
+    # http://effbot.org/zone/re-sub.htm#unescape-html
+    def fixup(m):
+        text = m.group(0)
+        if text[:2] == "&#":
+            # character reference
+            try:
+                if text[:3] == "&#x":
+                    return unichr(int(text[3:-1], 16))
+                else:
+                    return unichr(int(text[2:-1]))
+            except ValueError:
+                pass
+        else:
+            # named entity
+            try:
+                text = unichr(htmlentitydefs.name2codepoint[text[1:-1]])
+            except KeyError:
+                pass
+        return text # leave as is
+    return re.sub("&#?\w+;", fixup, text).encode("utf-8")
 
 def scrape(query, storefront):
     req = urllib2.Request(url=store_url + query)
@@ -189,7 +208,7 @@ def main(argv):
             type=lambda x: str(x).upper(), choices=countries,
             help='list of ISO-3166-1 Alpha-2 country codes to query')
     parser.add_argument('-o', '--output', action='store',
-            default='rankings.csv', type=argparse.FileType('w'),
+            default='rankings.csv', type=argparse.FileType('wb'),
             help='CSV-formatted output file (default: %(default)s)')
     args = parser.parse_args(argv)
 
@@ -200,6 +219,7 @@ def main(argv):
         print 'Countries: ' + ', '.join(args.countries)
 
     # Initialize our CSV output file.
+    args.output.write(u'\ufeff'.encode('utf-8')) # BOM
     output = csv.DictWriter(args.output,
             ['country', 'device', 'category', 'list', 'rank', 'name',
              'appid', 'timestamp'])
