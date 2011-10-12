@@ -107,7 +107,7 @@ countries = {
     'MX': Country('Mexico', '143468,12'),
     'MD': Country('Moldova', '143523,12'),
     'MS': Country('Montserrat', '143547,12'),
-    'ML': Country('Netherlands', '143452,12'),
+    'NL': Country('Netherlands', '143452,12'),
     'NZ': Country('New Zealand', '143461,12'),
     'NI': Country('Nicaragua', '143512-2,12'),
     'NE': Country('Niger', '143534,12'),
