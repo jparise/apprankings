@@ -12,8 +12,8 @@ This code is released under the terms of the [MIT License][license].
 
 ## Usage
 
-    usage: apprankings [-h] [-a APPS [APPS ...]] [-c COUNTRIES [COUNTRIES ...]]
-                       [-o OUTPUT] [-v]
+    usage: apprankings [-h] [-v] [-a APPS [APPS ...]] [-c COUNTRIES [COUNTRIES ...]]
+                       [-o OUTPUT] [--threads THREADS]
 
     Scrape App Store rankings
 
@@ -26,6 +26,7 @@ This code is released under the terms of the [MIT License][license].
                             list of ISO-3166-1 Alpha-2 country codes to query
     -o OUTPUT, --output OUTPUT
                             CSV-formatted output file (default: rankings.csv)
+    --threads THREADS     request thread pool size (default: 4)
 
 ## TODO
 
@@ -35,6 +36,5 @@ This code is released under the terms of the [MIT License][license].
   * Link
   * Price
   * Updated Date
-* Profile for performance improvements
 
 [license]: http://www.opensource.org/licenses/mit-license.php

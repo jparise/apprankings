@@ -30,7 +30,9 @@ import re
 import sys
 import urllib2
 
-from collections import namedtuple
+from collections import deque, namedtuple
+from Queue import Queue
+from threading import Thread
 
 # App Store countries (keyed by ISO-3166-1 Alpha-2 code)
 # We include each country's App Store-specific "store front" identifier.  This
@@ -182,6 +184,45 @@ queries = {
 app_re = re.compile(r'<div.* aria-label="(.*)" adam-id="(\d+)"')
 entities_re = re.compile(r'&(%s);' % '|'.join(htmlentitydefs.entitydefs))
 
+class ThreadPool(object):
+    """A pool of worker threads fed by an variable-length task queue."""
+
+    class Worker(Thread):
+
+        def __init__(self, tasks, results):
+            Thread.__init__(self)
+            self.tasks = tasks
+            self.results = results
+            self.daemon = True
+            self.start()
+
+        def run(self):
+            while True:
+                func, args, kwargs = self.tasks.get()
+                try:
+                    self.results.extend(func(*args, **kwargs))
+                except Exception, e:
+                    print e
+                finally:
+                    self.tasks.task_done()
+
+    def __init__(self, num_threads):
+        self.tasks = Queue(num_threads)
+        self.results = deque()
+        for _ in range(num_threads):
+            ThreadPool.Worker(self.tasks, self.results)
+
+    def add(self, func, *args, **kwargs):
+        """Add a new task to the queue.
+
+        The task function must return an iterable result value.
+        """
+        self.tasks.put((func, args, kwargs))
+
+    def wait(self):
+        """Wait for all of the tasks in the queue to complete."""
+        self.tasks.join()
+
 def decode(text):
     """Decode HTML entities in the given text as a UTF-8 string."""
     # http://effbot.org/zone/re-sub.htm#unescape-html
@@ -228,6 +269,8 @@ def main(argv):
     parser.add_argument('-o', '--output', action='store',
             default='rankings.csv', type=argparse.FileType('wb'),
             help='CSV-formatted output file (default: %(default)s)')
+    parser.add_argument('--threads', action='store', default=4, type=int,
+            help='request thread pool size (default: %(default)d)')
     args = parser.parse_args(argv)
 
     if args.apps and args.verbose:
@@ -242,6 +285,9 @@ def main(argv):
             ['country', 'device', 'category', 'list', 'rank', 'name',
              'appid', 'timestamp'])
     output.writeheader()
+
+    # Create our thread pool of task workers.
+    tasks = ThreadPool(args.threads)
 
     for country_code, country in countries.iteritems():
         # Skip any unrequested countries.
@@ -263,12 +309,21 @@ def main(argv):
                 'timestamp':    str(datetime.datetime.utcnow()),
             }
 
-            # For each item scraped from this query's results, update its
-            # values in the current row and write it to the CSV file.
-            for item in scrape(query, country.storefront):
-                if args.apps is None or item['appid'] in args.apps:
-                    row.update(item)
-                    output.writerow(row)
+            # Enqueue this query to our thread pool.  It will be run as soon
+            # as a worker becomes available.
+            tasks.add(scrape, query, country.storefront)
+
+        # Wait for all of this country's tasks to complete before continuing.
+        tasks.wait()
+
+        # Write all of the gathered results to our CSV output file.
+        for item in tasks.results:
+            if args.apps is None or item['appid'] in args.apps:
+                row.update(item)
+                output.writerow(row)
+
+        # Reset the results deque before moving on to the next country.
+        tasks.results.clear()
 
 if __name__ == '__main__':
     main(sys.argv[1:])
