@@ -246,7 +246,7 @@ def decode(text):
         return text # leave as is
     return re.sub("&#?\w+;", fixup, text).encode("utf-8")
 
-def scrape(query, storefront):
+def scrape(query, storefront, details):
     req = urllib2.Request(url=store_url + query)
     req.add_header('User-Agent', 'iTunes/10.4.1 (Macintosh; Intel Mac OS X 10.6.8) AppleWebKit/534.50')
     req.add_header('X-Apple-Store-Front', storefront)
@@ -254,7 +254,11 @@ def scrape(query, storefront):
     f = urllib2.urlopen(req)
     for rank, match in enumerate(app_re.finditer(f.read()), start=1):
         name, appid = match.groups()
-        yield dict(rank=rank, name=decode(name), appid=int(appid))
+        item = details.copy()
+        item['rank'] = rank
+        item['name'] = decode(name)
+        item['appid'] = int(appid)
+        yield item
 
 def main(argv):
     # Handle argument parsing.
@@ -300,8 +304,8 @@ def main(argv):
                 print 'Fetching %s-%s-%s-%s' % (country_code, ranking[0],
                                                 ranking[1], ranking[2])
 
-            # Create a new row dictionary for this batch of items.
-            row = {
+            # Create a new details dictionary for this batch of items.
+            details = {
                 'country':      country.name,
                 'device':       ranking[0],
                 'category':     ranking[1],
@@ -311,7 +315,7 @@ def main(argv):
 
             # Enqueue this query to our thread pool.  It will be run as soon
             # as a worker becomes available.
-            tasks.add(scrape, query, country.storefront)
+            tasks.add(scrape, query, country.storefront, details)
 
         # Wait for all of this country's tasks to complete before continuing.
         tasks.wait()
@@ -319,8 +323,7 @@ def main(argv):
         # Write all of the gathered results to our CSV output file.
         for item in tasks.results:
             if args.apps is None or item['appid'] in args.apps:
-                row.update(item)
-                output.writerow(row)
+                output.writerow(item)
 
         # Reset the results deque before moving on to the next country.
         tasks.results.clear()
