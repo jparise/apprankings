@@ -1,6 +1,6 @@
 # App Store Rankings Scraper
 
-Copyright &copy; 2011 Jon Parise &lt;jon@indelible.org&gt;
+Copyright &copy; 2011, 2012 Jon Parise &lt;jon@indelible.org&gt;
 
 `apprankings` scrapes App Store rankings from iTunes and writes the results
 to a CSV-formatted output file.  It currently queries both the iPhone and iPad
