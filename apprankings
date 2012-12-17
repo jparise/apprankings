@@ -23,6 +23,7 @@
 # IN THE SOFTWARE.
 
 import argparse
+import codecs
 import csv
 import datetime
 import htmlentitydefs
@@ -284,7 +285,7 @@ def main(argv):
         print 'Countries: ' + ', '.join(args.countries)
 
     # Initialize our CSV output file.
-    args.output.write(u'\ufeff'.encode('utf-8')) # BOM
+    args.output.write(codecs.BOM_UTF8)
     output = csv.DictWriter(args.output,
             ['country', 'device', 'category', 'list', 'rank', 'name',
              'appid', 'timestamp'])
