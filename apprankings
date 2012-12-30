@@ -183,7 +183,6 @@ queries = {
 }
 
 app_re = re.compile(r'<div.* aria-label="(.*)" adam-id="(\d+)"')
-entities_re = re.compile(r'&(%s);' % '|'.join(htmlentitydefs.entitydefs))
 
 class ThreadPool(object):
     """A pool of worker threads fed by an variable-length task queue."""
