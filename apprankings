@@ -22,6 +22,8 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
+from __future__ import print_function
+
 import argparse
 import codecs
 import csv
@@ -202,7 +204,7 @@ class ThreadPool(object):
                 try:
                     self.results.extend(func(*args, **kwargs))
                 except Exception, e:
-                    print e
+                    print(e, file=sys.stderr)
                 finally:
                     self.tasks.task_done()
 
@@ -278,10 +280,10 @@ def main(argv):
     args = parser.parse_args(argv)
 
     if args.apps and args.verbose:
-        print 'Apps: ' + ', '.join([str(app) for app in args.apps])
+        print('Apps: ' + ', '.join([str(app) for app in args.apps]))
 
     if args.countries and args.verbose:
-        print 'Countries: ' + ', '.join(args.countries)
+        print('Countries: ' + ', '.join(args.countries))
 
     # Initialize our CSV output file.
     args.output.write(codecs.BOM_UTF8)
@@ -301,8 +303,8 @@ def main(argv):
         # Run all of our ranking queries for this country.
         for ranking, query in queries.iteritems():
             if args.verbose:
-                print 'Fetching %s-%s-%s-%s' % (country_code, ranking[0],
-                                                ranking[1], ranking[2])
+                print('Fetching %s-%s-%s-%s' % (country_code, ranking[0],
+                                                ranking[1], ranking[2]))
 
             # Create a new details dictionary for this batch of items.
             details = {
