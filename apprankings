@@ -28,14 +28,20 @@ import argparse
 import codecs
 import csv
 import datetime
-import htmlentitydefs
 import re
 import sys
-import urllib2
 
 from collections import deque, namedtuple
-from Queue import Queue
 from threading import Thread
+
+if sys.version_info < (3, 0):
+    from htmlentitydefs import name2codepoint
+    from Queue import Queue
+    from urllib2 import Request, urlopen
+else:
+    from html.entities import name2codepoint
+    from queue import Queue
+    from urllib.request import Request, urlopen
 
 # App Store countries (keyed by ISO-3166-1 Alpha-2 code)
 # We include each country's App Store-specific "store front" identifier.  This
@@ -242,18 +248,18 @@ def decode(text):
         else:
             # named entity
             try:
-                text = unichr(htmlentitydefs.name2codepoint[text[1:-1]])
+                text = unichr(name2codepoint[text[1:-1]])
             except KeyError:
                 pass
         return text # leave as is
     return re.sub("&#?\w+;", fixup, text).encode("utf-8")
 
 def scrape(query, storefront, details):
-    req = urllib2.Request(url=store_url + query)
+    req = Request(url=store_url + query)
     req.add_header('User-Agent', 'iTunes/10.4.1 (Macintosh; Intel Mac OS X 10.6.8) AppleWebKit/534.50')
     req.add_header('X-Apple-Store-Front', storefront)
 
-    f = urllib2.urlopen(req)
+    f = urlopen(req)
     for rank, match in enumerate(app_re.finditer(f.read()), start=1):
         name, appid = match.groups()
         item = details.copy()
