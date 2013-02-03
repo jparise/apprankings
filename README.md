@@ -26,6 +26,7 @@ This code is released under the terms of the [MIT License][license].
                             list of ISO-3166-1 Alpha-2 country codes to query
     -o OUTPUT, --output OUTPUT
                             CSV-formatted output file (default: rankings.csv)
+    --source SOURCE       source address given as host[:port] (default: auto)
     --threads THREADS     request thread pool size (default: 4)
 
 ## TODO

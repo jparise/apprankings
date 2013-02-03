@@ -28,6 +28,7 @@ import argparse
 import codecs
 import csv
 import datetime
+import functools
 import re
 import sys
 
@@ -36,12 +37,16 @@ from threading import Thread
 
 if sys.version_info < (3, 0):
     from htmlentitydefs import name2codepoint
+    from httplib import HTTPConnection
     from Queue import Queue
-    from urllib2 import Request, urlopen
+    from urllib2 import HTTPHandler, Request, build_opener, install_opener, \
+            urlopen
 else:
     from html.entities import name2codepoint
+    from http.client import HTTPConnection
     from queue import Queue
-    from urllib.request import Request, urlopen
+    from urllib.request import HTTPHandler, Request, build_opener, \
+            install_opener, urlopen
 
 # App Store countries (keyed by ISO-3166-1 Alpha-2 code)
 # We include each country's App Store-specific "store front" identifier.  This
@@ -268,7 +273,24 @@ def scrape(query, storefront, details):
         item['appid'] = int(appid)
         yield item
 
+class BoundHTTPHandler(HTTPHandler):
+
+    def __init__(self, source_address=None, debuglevel=0):
+        HTTPHandler.__init__(self, debuglevel)
+        self.http_class = functools.partial(HTTPConnection,
+                source_address=source_address)
+
+    def http_open(self, req):
+        return self.do_open(self.http_class, req)
+
 def main(argv):
+    def source_address(s):
+        m = re.match(r'([\w\.]+)(?::([0-9]+))?', s)
+        if m is None:
+            msg = '%r must be in the form "host[:port]"' % s
+            raise argparse.ArgumentTypeError(msg)
+        return (m.group(1), int(m.group(2)) if len(m.groups()) == 3 else 0)
+
     # Handle argument parsing.
     parser = argparse.ArgumentParser(description='Scrape App Store rankings')
     parser.add_argument('-v', '--verbose', action='store_true',
@@ -281,6 +303,9 @@ def main(argv):
     parser.add_argument('-o', '--output', action='store',
             default='rankings.csv', type=argparse.FileType('wb'),
             help='CSV-formatted output file (default: %(default)s)')
+    if sys.version_info >= (2, 7):
+        parser.add_argument('--source', action='store', type=source_address,
+                help='source address given as host[:port] (default: auto)')
     parser.add_argument('--threads', action='store', default=4, type=int,
             help='request thread pool size (default: %(default)d)')
     args = parser.parse_args(argv)
@@ -290,6 +315,13 @@ def main(argv):
 
     if args.countries and args.verbose:
         print('Countries: ' + ', '.join(args.countries))
+
+    if args.source:
+        if args.verbose:
+            print('Source Address: %s:%d' % args.source)
+        handler = BoundHTTPHandler(args.source)
+        opener = build_opener(handler)
+        install_opener(opener)
 
     # Initialize our CSV output file.
     args.output.write(codecs.BOM_UTF8)
