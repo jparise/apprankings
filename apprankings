@@ -2,7 +2,7 @@
 #
 # App Store Rankings Scraper
 #
-# Copyright (c) 2011, 2012 Jon Parise <jon@indelible.org>
+# Copyright (c) 2011-2018 Jon Parise <jon@indelible.org>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -40,13 +40,13 @@ if sys.version_info < (3, 0):
     from httplib import HTTPConnection
     from Queue import Queue
     from urllib2 import HTTPHandler, Request, build_opener, install_opener, \
-            urlopen
+        urlopen
 else:
     from html.entities import name2codepoint
     from http.client import HTTPConnection
     from queue import Queue
     from urllib.request import HTTPHandler, Request, build_opener, \
-            install_opener, urlopen
+        install_opener, urlopen
 
 # App Store countries (keyed by ISO-3166-1 Alpha-2 code)
 # We include each country's App Store-specific "store front" identifier.  This
@@ -181,21 +181,22 @@ countries = {
 store_url = 'http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewTop'
 
 queries = {
-    ('iphone','all','paid'):      '?genreId=36&id=25129&popId=30',
-    ('iphone','all','free'):      '?genreId=36&id=25129&popId=27',
-    ('iphone','all','gross'):     '?genreId=36&id=25129&popId=38',
-    ('ipad','all','paid'):        '?genreId=36&id=25129&popId=47',
-    ('ipad','all','free'):        '?genreId=36&id=25129&popId=44',
-    ('ipad','all','gross'):       '?genreId=36&id=25129&popId=46',
-    ('iphone','games','paid'):    '?genreId=6014&id=25134&popId=30',
-    ('iphone','games','free'):    '?genreId=6014&id=25134&popId=27',
-    ('iphone','games','gross'):   '?genreId=6014&id=25134&popId=38',
-    ('ipad','games','paid'):      '?genreId=6014&id=25134&popId=47',
-    ('ipad','games','free'):      '?genreId=6014&id=25134&popId=44',
-    ('ipad','games','gross'):     '?genreId=6014&id=25134&popId=46',
+    ('iphone', 'all', 'paid'):      '?genreId=36&id=25129&popId=30',
+    ('iphone', 'all', 'free'):      '?genreId=36&id=25129&popId=27',
+    ('iphone', 'all', 'gross'):     '?genreId=36&id=25129&popId=38',
+    ('ipad', 'all', 'paid'):        '?genreId=36&id=25129&popId=47',
+    ('ipad', 'all', 'free'):        '?genreId=36&id=25129&popId=44',
+    ('ipad', 'all', 'gross'):       '?genreId=36&id=25129&popId=46',
+    ('iphone', 'games', 'paid'):    '?genreId=6014&id=25134&popId=30',
+    ('iphone', 'games', 'free'):    '?genreId=6014&id=25134&popId=27',
+    ('iphone', 'games', 'gross'):   '?genreId=6014&id=25134&popId=38',
+    ('ipad', 'games', 'paid'):      '?genreId=6014&id=25134&popId=47',
+    ('ipad', 'games', 'free'):      '?genreId=6014&id=25134&popId=44',
+    ('ipad', 'games', 'gross'):     '?genreId=6014&id=25134&popId=46',
 }
 
 app_re = re.compile(r'<div.* aria-label="(.*)" adam-id="(\d+)"')
+
 
 class ThreadPool(object):
     """A pool of worker threads fed by an variable-length task queue."""
@@ -236,6 +237,7 @@ class ThreadPool(object):
         """Wait for all of the tasks in the queue to complete."""
         self.tasks.join()
 
+
 def decode(text):
     """Decode HTML entities in the given text as a UTF-8 string."""
     # http://effbot.org/zone/re-sub.htm#unescape-html
@@ -256,12 +258,15 @@ def decode(text):
                 text = unichr(name2codepoint[text[1:-1]])
             except KeyError:
                 pass
-        return text # leave as is
+        return text  # leave as is
     return re.sub("&#?\w+;", fixup, text).encode("utf-8")
+
 
 def scrape(query, storefront, details):
     req = Request(url=store_url + query)
-    req.add_header('User-Agent', 'iTunes/10.4.1 (Macintosh; Intel Mac OS X 10.6.8) AppleWebKit/534.50')
+    req.add_header(
+        'User-Agent',
+        'iTunes/10.4.1 (Macintosh; Intel Mac OS X 10.6.8) AppleWebKit/534.50')
     req.add_header('X-Apple-Store-Front', storefront)
 
     f = urlopen(req)
@@ -273,15 +278,17 @@ def scrape(query, storefront, details):
         item['appid'] = int(appid)
         yield item
 
+
 class BoundHTTPHandler(HTTPHandler):
 
     def __init__(self, source_address=None, debuglevel=0):
         HTTPHandler.__init__(self, debuglevel)
-        self.http_class = functools.partial(HTTPConnection,
-                source_address=source_address)
+        self.http_class = \
+            functools.partial(HTTPConnection, source_address=source_address)
 
     def http_open(self, req):
         return self.do_open(self.http_class, req)
+
 
 def main(argv):
     def source_address(s):
@@ -293,21 +300,27 @@ def main(argv):
 
     # Handle argument parsing.
     parser = argparse.ArgumentParser(description='Scrape App Store rankings')
-    parser.add_argument('-v', '--verbose', action='store_true',
-            help='verbose logging output')
-    parser.add_argument('-a', '--apps', action='store', nargs='+', type=int,
-            help='include only these app IDs in the output')
-    parser.add_argument('-c', '--countries', action='store', nargs='+',
-            type=lambda x: str(x).upper(), choices=countries,
-            help='list of ISO-3166-1 Alpha-2 country codes to query')
-    parser.add_argument('-o', '--output', action='store',
-            default='rankings.csv', type=argparse.FileType('wb'),
-            help='CSV-formatted output file (default: %(default)s)')
+    parser.add_argument(
+        '-v', '--verbose', action='store_true',
+        help='verbose logging output')
+    parser.add_argument(
+        '-a', '--apps', action='store', nargs='+', type=int,
+        help='include only these app IDs in the output')
+    parser.add_argument(
+        '-c', '--countries', action='store', nargs='+',
+        type=lambda x: str(x).upper(), choices=countries,
+        help='list of ISO-3166-1 Alpha-2 country codes to query')
+    parser.add_argument(
+        '-o', '--output', action='store',
+        default='rankings.csv', type=argparse.FileType('wb'),
+        help='CSV-formatted output file (default: %(default)s)')
     if sys.version_info >= (2, 7):
-        parser.add_argument('--source', action='store', type=source_address,
-                help='source address given as host[:port] (default: auto)')
-    parser.add_argument('--threads', action='store', default=4, type=int,
-            help='request thread pool size (default: %(default)d)')
+        parser.add_argument(
+            '--source', action='store', type=source_address,
+            help='source address given as host[:port] (default: auto)')
+    parser.add_argument(
+        '--threads', action='store', default=4, type=int,
+        help='request thread pool size (default: %(default)d)')
     args = parser.parse_args(argv)
 
     if args.apps and args.verbose:
@@ -325,9 +338,10 @@ def main(argv):
 
     # Initialize our CSV output file.
     args.output.write(codecs.BOM_UTF8)
-    output = csv.DictWriter(args.output,
-            ['country', 'device', 'category', 'list', 'rank', 'name',
-             'appid', 'timestamp'])
+    output = csv.DictWriter(
+        args.output,
+        ['country', 'device', 'category', 'list', 'rank', 'name', 'appid',
+         'timestamp'])
     output.writeheader()
 
     # Create our thread pool of task workers.
@@ -367,6 +381,7 @@ def main(argv):
 
         # Reset the results deque before moving on to the next country.
         tasks.results.clear()
+
 
 if __name__ == '__main__':
     main(sys.argv[1:])
